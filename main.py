@@ -4,6 +4,7 @@ import sys
 
 import threading
 import time
+import traceback
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -140,9 +141,9 @@ def visit(shopid, _browser, _wait):
     :param _wait: 等待
     :return:
     """
-    # 访问页面
-    _browser.get("https://mall.jd.com/shopBrandMember-" + str(shopid) + ".html")
     try:
+        # 访问页面
+        _browser.get("https://mall.jd.com/shopBrandMember-" + str(shopid) + ".html")
         gift_info = _browser.find_element_by_xpath('//*[@id="J_brandMember"]/div[3]/div/ul')
         # 替换掉正则表达式
         if "豆" in list(gift_info.text):
@@ -158,17 +159,18 @@ def visit(shopid, _browser, _wait):
                     (By.XPATH, '//*[@id="J_brandMember"]/div[2]/div/div[4]'))).click()
             # 添加到最后
             global shopID
-            shopID.append("\n" + str(shopid))
+            shopID.append(str(shopid) + '\n')
             # 获取的京豆
             global get_jd
             get_jd += int(jd)
             print_log("INFO", str(shopid) + "入会成功", "获得" + str(jd) + "京豆")
             # 写入
             with open(get_file("shopid.txt"), "w") as f:
-                # 去重 fixme: 去重好像没有啊????
-                _newid = list(dict.fromkeys(shopID[::-1]))[::-1]
-                for _ in _newid:
-                    if _ != "\n":
+                newid = list(dict.fromkeys(shopID[::-1]))[::-1]
+                for _ in newid:
+                    if newid[-1] == _:
+                        f.write(_[0:-1])
+                    else:
                         f.write(_)
 
     except WebDriverException:
@@ -188,12 +190,14 @@ def traversals(start: int, end: int, step: int = 1):
     """
     try:
         browser = get_browser(config)
-        wait = WebDriverWait(browser, 3)
+        wait = WebDriverWait(browser, 8)
         browser.get("https://www.jd.com/")
-
         # 写入 cookie
         for cookie in config['users'][config['useUser']]['cookie']:
+            # 在某些网络环境下可能会登录异常
+            cookie['domain'] = ".jd.com"
             browser.add_cookie(cookie)
+        browser.get("https://home.jd.com/")
         browser.refresh()
         # 验证是否登录成功
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'nickname')))
@@ -202,25 +206,34 @@ def traversals(start: int, end: int, step: int = 1):
             visit(int(_id), _browser=browser, _wait=wait)
             add_completed()
     except WebDriverException:
+        traceback.print_exc()
         print_log("ERROR", "登录失败", "请使用‘add_cookie.py’添加cookie")
     except ValueError:
         print_log("ERROR", "可能是shopid损坏", "请到github上下载最新的")
     except IndexError:
-        print_log("ERROR", "请先登录", "请使用add_cookie.py登录")
+        print_log("ERROR", "请先登录", "请检查config的'useUser'")
 
 
 def main():
     """
     :return:
     """
+    # fixme: 在某些情况下线程不能完全停止
     for i in range(THREAD):
         if i == THREAD - 1:
             # t(start=-1, end=-THREAD_LEN)
-            threading.Thread(target=traversals, args=(-1, -THREAD_LEN, -1,)).start()
+            t = threading.Thread(target=traversals, args=(-1, -THREAD_LEN, -1,))
+            # t.setDaemon(True)
+            t.start()
+            # thread_list.append(t)
         else:
             # 优先执行上次送豆的
             # t(start=i * THREAD_LEN, end=(i + 1) * THREAD_LEN)
-            threading.Thread(target=traversals, args=(i * THREAD_LEN, (i + 1) * THREAD_LEN, 1,)).start()
+            t = threading.Thread(target=traversals, args=(i * THREAD_LEN, (i + 1) * THREAD_LEN, 1,))
+            # t.setDaemon(True)
+            t.start()
+            # thread_list.append(t)
+
 
     # 所有结束时才会结束
     while threading.active_count() != 1:
@@ -243,8 +256,8 @@ def print_process():
     :return:
     """
     # print("\r {:.5f}%".format(completed / ID_LEN), end="")
-    print("\r正在执行：{:^5.5f}%[{}->{}]此次运行获得{}京豆".format((completed / ID_LEN), "=" * int(70 * (completed / ID_LEN)),
-                                            "*" * (70 - int(70 * (completed / ID_LEN))), get_jd), end="")
+    print("\r正在执行：{:^5.3f}%[{}->{}]此次运行获得{}京豆".format((completed / ID_LEN) * 100, "=" * int(50 * (completed / ID_LEN)),
+                                            "*" * (50 - int(50 * (completed / ID_LEN))), get_jd), end="")
 
 
 if __name__ == '__main__':
@@ -252,8 +265,13 @@ if __name__ == '__main__':
         config = get_config()
         # 线程数
         THREAD = config['thread']
-        shopID = open(get_file("shopid.txt"), "r").readlines()
         # 店铺数
+        shopID = open(get_file("shopid.txt"), "r").readlines()
+
+        # 修复了去重的问题
+        if shopID[-1][-1] != "\n":
+            shopID[-1] = shopID[-1] + "\n"
+
         ID_LEN = len(shopID)
         completed = 0
         # 每个线程的店铺数
@@ -264,6 +282,5 @@ if __name__ == '__main__':
         main()
     except Exception as e:
         print_log("ERROR", "运行错误", str(e.args))
-        print("")
     finally:
         print("运行结束")
