@@ -1,106 +1,95 @@
+>   这是一个未完成的文档！
+
 [![GitHub all releases](https://img.shields.io/github/downloads/AntonVanke/JDBrandMember/total?style=for-the-badge)](https://github.com/AntonVanke/JDBrandMember/releases/)[![GitHub release (latest by date)](https://img.shields.io/github/v/release/AntonVanke/JDBrandMember?style=for-the-badge)](https://github.com/AntonVanke/JDBrandMember/releases/latest)
 
-### 京东入会领京豆
+## 开始之前
 
-#### 要求
+### 风险
 
-1.  有一定的电脑知识 or 有耐心爱折腾
-2.  需要`Chrome(推荐)`
-3.  操作系统需是 Mac([@zc-nju-med](https://github.com/AntonVanke/JDBrandMember/issues/18#issuecomment-830028426)在m1上测试正常)、Linux(在deepin上测试过)、Windows
+1.  京东账号有被黑号的风险，即一定时间内不能参与活动
+2.  入会（开卡）有礼会将你的个人信息授权给店铺，所以你可能会收到店铺的推广信息
+3.  退会比较麻烦
+4.  不要泄露你的`config.yaml`
 
-#### 安装方法
+### 你需要
 
-脚本采用`Selenium`遍历京东入会有礼界面，由于遍历了`20000+`个店铺，可能所需要的时间比较长(视电脑情况30min-5h)
+1.  电脑知道如何安装`Python`环境；手机知道该如何在`Termux`上安装`Python`环境，或者在`ios`上安装`Pythonista`
+    1.  电脑访问 [Python Mirror (taobao.org)](https://npm.taobao.org/mirrors/python/) 安装`Python`
+    2.  安卓手机在各大应用商店搜索`Termux`安装后执行`pkg install python`
+2.  会获取京东账号的`cookie`即`pt_key=ABC;pt_pin=123`
 
-1.  克隆到本地
+>   如果你不能在电脑上安装`Python`环境，你可以去[Release]([Releases · AntonVanke/JDBrandMember (github.com)](https://github.com/AntonVanke/JDBrandMember/releases))查看已经打包好的程序
 
-    ```shell
-    git clone https://github.com/AntonVanke/JDBrandMember.git
+## 快速开始
+
+在电脑或者`Termux`上运行的方式
+
+1.  下载本项目
+
+    `git clone https://github.com/AntonVanke/JDBrandMember.git`
+
+    或者下载 zip 压缩包
+
+2.  安装所需的包
+
+    `pip install -r requirements.txt`
+
+3.  配置`config.yaml`
+
+    一般你只需要配置好`cookies`字段就行了像是这样：
+
+    ```yaml
+    cookies:
+      - pt_key=******;pt_pin=******
+      - pt_key=******;pt_pin=******
     ```
 
-2.  安装所需要的包
-
-    ```shell
-    pip3 install -r requirements.txt
+    每个账号占用一行，`-`前面有两个空格而不是<kbd>Tab</kbd>， 后面有一个空格与`cookie`隔开，如果你不知道怎么获取手机京东`cookie`你可以查看这个：[如何获取京东COOKIE](/docs/HOW_TO_GET_COOKIE.md)
+    
+    **其它的一些配置**(几乎用不上)
+    
+    ```yaml
+    # 线程数量: 注意！不要超过 8 线程，否则可能会被京东临时禁止访问
+    thread: 4
+    # 筛选
+    screening:
+      bean: 0  # 最小获得京豆数少于此的不会获取
+      voucher: true  # 是否获取红包？true: 获取, false: 不获取。红包有有效期限！
+    # 用户注册时所填写的信息
+    register:
+      v_sex: 男  # 要求: 男 or 女
+      v_birthday: 2000-09-27  # 要求: yyyy-mm-dd
+      v_name: 康有为  # 要求: 1 - 10 个字符
+    # 用户代理，可自行配置
+    user-agent:
+        - Mozilla/5.0
+    # 获取 shop_id 的连接地址详见 main.py -> get_shopid()
+    shop_id_url: https://antonvanke.github.io/JDBrandMember/shopid.yaml
     ```
+    
+4.  运行
 
-3.  下载对应的浏览器驱动放到项目的`drivers`文件夹下面
+    >   `python main.py`
+    
+5.  出现错误怎么办？
 
-    1.  `chrome`请访问`chrome://version/`查看浏览器的版本，然后去[ChromeDriver Mirror (taobao.org)](https://npm.taobao.org/mirrors/chromedriver/)下载对应的版本/系统驱动
+    >   你可以提交`Issue`报告给我
+    >
+    >   注意： 
+    >
+    >   在境外服务器可能存在失败的情况，尤其是`Github actions`
 
-        >   `/drivers/`目录默认的驱动是`chromedriver`(如下)，其它需要替换
-        >
-        >   | Google Chrome | 90.0.4430.212 (正式版本) (x86_64) |
-        >   | ------------- | --------------------------------- |
-        >   | **操作系统**  | macOS 版本11.4（版号20F5055c）    |
-        >
-        >   例如 <https://npm.taobao.org/mirrors/chromedriver/90.0.4430.24/>，不要下载成了`LATEST_RELEASE_*`开头的文件了[案例](https://github.com/AntonVanke/JDBrandMember/issues/19#issuecomment-832664967)
+## 运行截图
 
-    2.  由于增加了兼容性，所以代码默认不提供`Edge(Chromium)`、`Firefox`。如果你想要运行在这些浏览器上请修改`get_browser`函数并在下面的网站获取驱动：
-        1.  `edge`请访问`edge://version/`查看浏览器的版本，[Microsoft Edge - Webdriver (windows.net)](https://msedgewebdriverstorage.z22.web.core.windows.net/)下载
-        2.  `Firefox`请访问[Releases · mozilla/geckodriver (github.com)](https://github.com/mozilla/geckodriver/releases/)下载
+![](docs/_images/FDB9C153889F569D4B67F05EEF405D91.jpg)
 
+## Tools
 
-#### 运行
+`tools/traversal.py`: 用于生成`shopid.yaml`你可以访问[怎么更新shopid.yaml](docs/HOW_TO_UPDATE_SHOPID.md) 查看说明
 
-如果你以上步骤执行的没有错误的话，你的文件下会有这些文件：
+## LICENSE
 
-```floder
--JDBrandMember
-|
-|- drivers
-|	|- chromedriver
-|
-|- main.py
-|- shopid.txt
-|
-|- requirements.txt
-|- README.md & LICENSE
-```
-
-##### 首次运行
-
-1.  运行`python3 main.py`，如果没有报错的话，会弹出浏览器页面，此时需要你登录京东
-
-2.  运行之后输入`3`退出，这时你会看到生成了`logs`文件夹和`config.json`
-
-    ```python
-    {
-        "thread": 6,  # 运行的线程数
-        "binary": "",  # 如果驱动没有找到浏览器的话，需要手动配置路径
-        "headless": true,  # 是否开启无头模式？建议打开
-        "useUser": 0,  # 使用的用户: 0 表示所有、1 代表第 1 个，以此类推
-        "threshold": 0,  # 最小京豆数量，小于此的不会入会
-        "is_get_voucher": false,  # 是否获取红包，因为红包的有有效期，所以暂时不用的不要开启
-        "users": []  # 用户列表
-    }
-    ```
-
-##### 配置
-
-按照上面的配置你的`config.json`, 执行`python3 main.py`，等待执行完毕即可，你可以访问项目下的`logs/jdbm.log`查看你的日志
-
-##### 注意
-
-不要泄露你的`config.json`
-
-退出时请使用<kbd>Ctrl</kbd>+<kbd>C</kbd>输入 3 退出，否则可能本次运行的结果不会保存， 并且可能会遗留大部分线程[ Issue #23](https://github.com/AntonVanke/JDBrandMember/issues/23#issue-886555670)
-
-#### 较上次更新的内容
-
-1.  京豆阈值([ Issue #23 ](https://github.com/AntonVanke/JDBrandMember/issues/23#issue-886555670)、[ Issue #13](https://github.com/AntonVanke/JDBrandMember/issues/13#issue-869470525))
-
-2.  多账号执行([Issue #20](https://github.com/AntonVanke/JDBrandMember/issues/20#issue-871837264))
-
-3.  突然发现还能领红包？？
-
-    [![红包](https://z3.ax1x.com/2021/05/15/gy373q.jpg)](https://imgtu.com/i/gy373q)
-
-####  LICENSE
-
->  
 >   MIT License
->   
+>
 >   Copyright (c) 2021 Vanke Anton
->   
 
