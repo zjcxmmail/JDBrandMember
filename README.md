@@ -1,5 +1,3 @@
->   这是一个未完成的文档！
-
 [![GitHub all releases](https://img.shields.io/github/downloads/AntonVanke/JDBrandMember/total?style=for-the-badge)](https://github.com/AntonVanke/JDBrandMember/releases/)[![GitHub release (latest by date)](https://img.shields.io/github/v/release/AntonVanke/JDBrandMember?style=for-the-badge)](https://github.com/AntonVanke/JDBrandMember/releases/latest)
 
 ## 开始之前
@@ -13,12 +11,26 @@
 
 ### 你需要
 
-1.  电脑知道如何安装`Python`环境；手机知道该如何在`Termux`上安装`Python`环境，或者在`ios`上安装`Pythonista`
-    1.  电脑访问 [Python Mirror (taobao.org)](https://npm.taobao.org/mirrors/python/) 安装`Python`
+1.  电脑知道如何安装`Python3`环境；手机知道该如何在`Termux`上安装`Python3`环境，或者在`ios`上安装`Pythonista`
+    1.  电脑访问 [Python Mirror (taobao.org)](https://npm.taobao.org/mirrors/python/) 安装`Python3`
     2.  安卓手机在各大应用商店搜索`Termux`安装后执行`pkg install python`
 2.  会获取京东账号的`cookie`即`pt_key=ABC;pt_pin=123`
 
 >   如果你不能在电脑上安装`Python`环境，你可以去[Release]([Releases · AntonVanke/JDBrandMember (github.com)](https://github.com/AntonVanke/JDBrandMember/releases))查看已经打包好的程序
+
+### 如何退会
+
+>   请查看 @yqchilde 大佬的[yqchilde/JDMemberCloseAccount](https://github.com/yqchilde/JDMemberCloseAccount)
+
+### 如何联系到我
+
+>   你可以提交`Issue`和来和我联系，你也可以通过以下途径
+>
+>   @yqchilde 大佬的 [Telegram 电报群](https://t.me/joinchat/KhS18aPM9I9jZWVl)
+>
+>   @curtinlv 大佬的 [Telegram 电报群](https://t.me/topStyle996)
+>
+>   都可以找到我`^_^`(AntonVanke)
 
 ## 快速开始
 
@@ -32,7 +44,7 @@
 
 2.  安装所需的包
 
-    `pip install -r requirements.txt`
+    `pip3 install -r requirements.txt`
 
 3.  配置`config.yaml`
 
@@ -69,7 +81,7 @@
     
 4.  运行
 
-    >   `python main.py`
+    >   `python3 main.py`
     
 5.  出现错误怎么办？
 
@@ -86,6 +98,8 @@
 ## Tools
 
 `tools/traversal.py`: 用于生成`shopid.yaml`你可以访问[怎么更新shopid.yaml](docs/HOW_TO_UPDATE_SHOPID.md) 查看说明
+
+`tools/get_user_brand_member.py`: 用于生成`user_shop_venderId.txt`,是你入会的所有店铺`venderId`，你可以访问[我有哪些店铺的会员？](docs/WHAT_SHOP_MEMBER_DO_I_HAVE.md)查看说明
 
 ## LICENSE
 

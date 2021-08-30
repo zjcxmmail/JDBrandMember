@@ -22,6 +22,7 @@ def get_shopid():
     """
     获取 shopid, 如果网络上的更新时间比本地早则使用本地的，其它则使用网络上的
     """
+    use_file = CONFIG["screening"].get("use", "shopid.yaml")
     try:
         net_res = requests.get(CONFIG['shop_id_url'], timeout=30)
         if net_res.status_code != 200:
@@ -29,11 +30,11 @@ def get_shopid():
     except:
         print(to_log("ERROR", "获取线上 shopid 失败"))
 
-    if os.path.exists(get_file_path("shopid.yaml")):
+    if os.path.exists(get_file_path(use_file)):
         try:
-            res = yaml.safe_load(open(get_file_path("shopid.yaml"), "r", encoding="utf-8"))
+            res = yaml.safe_load(open(get_file_path(use_file), "r", encoding="utf-8"))
         except:
-            os.remove(get_file_path("shopid.yaml"))
+            os.remove(get_file_path(use_file))
             print(to_log("ERROR", "shopid.yaml损坏", "已经删除损坏文件，请重新打开"))
             sys.exit()
     try:
@@ -42,7 +43,7 @@ def get_shopid():
                                                                                 '%Y-%m-%d')).days > 0:
             print(to_log("INFO", "已更新 shopid"))
             res = yaml.safe_load(net_res.text)
-            open(get_file_path("shopid.yaml"), "w", encoding="utf-8").write(net_res.text)
+            open(get_file_path(use_file), "w", encoding="utf-8").write(net_res.text)
     except:
         pass
     print(to_log("INFO", "shopid更新时间", str(res['update_time'])))
@@ -222,32 +223,39 @@ def bind(cookie, thread):
     for _ in shop_id_list[thread::CONFIG['thread']]:
         status, prize_name, discount, activity_id = get_shop_open_card_info(cookie, _)
         process[0] += 1
-        # 筛选条件
-        if prize_name == "京豆" and int(discount) < CONFIG['screening']['bean']:
-            return
-        if prize_name == "元红包" and not CONFIG['screening']['voucher']:
-            return
+        if status:
+            # 筛选条件
+            if prize_name == "京豆" and int(discount) < int(CONFIG['screening']['bean']):
+                return
+            if prize_name == "元红包" and not CONFIG['screening']['voucher']:
+                return
 
-        if bind_with_vender(cookie, _, activity_id):
-            print(to_log("INFO", "开卡成功", "在" + str(_) + "获得 " + str(discount) + prize_name))
+            if bind_with_vender(cookie, _, activity_id):
+                print(to_log("INFO", "开卡成功", "在" + str(_) + "获得 " + str(discount) + prize_name))
+            time.sleep(int(CONFIG.get("sleep-time", 0)))
 
 
 def main():
-    global process
-    for _ in CONFIG['cookies']:
-        process = [0, 0, 0]
-        status, username, bean_num = get_user_info(_)
-        if status:
-            print(to_log("INFO", "账号名称: " + str(username) + " 现有京豆数量: " + str(bean_num)))
-            for thread in range(CONFIG['thread']):
-                # xxx(cookie=_, shop_id_list=shop_id_list, thread=thread)
-                threading.Thread(target=bind, args=(_, thread,)).start()
-            while threading.active_count() != 1:
-                print("\r 账号:{}, 已尝试{}个店铺，获得{}京豆和{}元红包".format(username, process[0], process[1], process[2]), end="")
-                time.sleep(0.5)
-        else:
-            print(to_log("ERROR", "cookie失效", _[-15:]))
-        print(to_log("INFO", "账号{}".format(username), "共尝试{}个店铺，共获得{}京豆和{}元红包\n".format(process[0], process[1], process[2])))
+    try:
+        global process
+        for _ in CONFIG['cookies']:
+            process = [0, 0, 0]
+            status, username, bean_num = get_user_info(_)
+            if status:
+                print(to_log("INFO", "账号名称: " + str(username) + " 现有京豆数量: " + str(bean_num)))
+                for thread in range(CONFIG['thread']):
+                    # xxx(cookie=_, shop_id_list=shop_id_list, thread=thread)
+                    threading.Thread(target=bind, args=(_, thread,)).start()
+                while threading.active_count() != 1:
+                    print("\r 账号:{}, 已尝试{}个店铺，获得{}京豆和{}元红包".format(username, process[0], process[1], process[2]),
+                          end="")
+                    time.sleep(0.5)
+            else:
+                print(to_log("ERROR", "cookie失效", _[-15:]))
+            print(to_log("INFO", "账号{}".format(username),
+                         "共尝试{}个店铺，共获得{}京豆和{}元红包\n".format(process[0], process[1], process[2])))
+    except:
+        print(to_log("ERROR", "运行错误", "在" + traceback.format_exc()))
 
 
 if __name__ == '__main__':
